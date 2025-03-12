@@ -1,6 +1,6 @@
 import express from 'express';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const app = express();
 const port = 3000;
@@ -21,11 +21,12 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
+// Generates unique Doc ID for Firebase
 const generateDocId = () => {
     return new Date().getTime().toString();                             
 }
 
-// 1. Add a new movie
+// Add new movie
 app.post('/movies', async (req, res) => {
     const { title, genre, year } = req.body;
     if (!title || !genre || !year ) {
@@ -35,6 +36,24 @@ app.post('/movies', async (req, res) => {
     const newMovie = { title, genre, year };
     await setDoc(doc(db, "movies", generateDocId()), newMovie);
     res.status(201).json(newMovie);
+});
+
+// Retrieve a Movie
+app.get('/movies/:id', async (req, res) => {
+    const movieId = req.params.id;
+
+    try {
+        const docRef = doc(db, "movies", movieId);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) {
+            return res.status(404).json({ error: 'Movie not found.' });
+        }
+
+        res.json(docSnap.data());
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching movie from Firebase Firestore', details: error });
+    }
 });
 
 // Start the server
