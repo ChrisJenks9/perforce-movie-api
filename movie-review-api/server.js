@@ -1,7 +1,6 @@
 import express from 'express';
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-import admin from 'firebase-admin';
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, } from "firebase/firestore";
 
 const app = express();
 const port = 3000;
@@ -72,6 +71,33 @@ app.post('/movies/:id/reviews', async (req, res) => {
     };
     await setDoc(doc(db, "reviews", generateDocId()), newMovieReview);
     res.status(201).json(newMovieReview);
+});
+
+app.get('/movies/:id/reviews', async (req, res) => {
+    const movieId = req.params.id;
+
+    const getReviewsWithMovieId = query(collection(db, 'reviews'), where('movieId', '==', movieId));
+    const reviews = await getDocs(getReviewsWithMovieId);
+
+    if (reviews.empty) {
+        return res.status(404).json({ error: 'No reviews found for this movie.' });
+    }
+
+    let totalRatingCount = 0;
+    let reviewCount = 0;
+
+    reviews.forEach(doc => {
+        const reviewData = doc.data();
+        totalRatingCount += reviewData.rating;
+        reviewCount++;
+    });
+
+    const averageRating = totalRatingCount / reviewCount;
+
+    res.json({
+        movieId,
+        averageRating,
+    });
 });
 
 // Start the server
