@@ -42,18 +42,14 @@ app.post('/movies', async (req, res) => {
 app.get('/movies/:id', async (req, res) => {
     const movieId = req.params.id;
 
-    try {
-        const docRef = doc(db, "movies", movieId);
-        const docSnap = await getDoc(docRef);
+    const docRef = doc(db, "movies", movieId);
+    const docSnap = await getDoc(docRef);
         
-        if (!docSnap.exists()) {
-            return res.status(404).json({ error: 'Movie not found.' });
-        }
-
-        res.json(docSnap.data());
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching movie from Firebase Firestore', details: error });
+    if (!docSnap.exists()) {
+        return res.status(404).json({ error: 'Movie not found.' });
     }
+
+    res.json(docSnap.data());
 });
 
 app.post('/movies/:id/reviews', async (req, res) => {
@@ -98,6 +94,43 @@ app.get('/movies/:id/reviews', async (req, res) => {
         movieId,
         averageRating,
     });
+});
+
+app.get('/movies/reviews/top-rated', async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const reviews = await getDocs(collection(db, 'reviews'));
+
+    if (reviews.empty) {
+        return res.status(404).json({ error: 'No reviews found.' });
+    }
+
+    let movieRatings = {};
+
+    reviews.forEach(doc => {
+        const review = doc.data();
+        const { movieId, rating } = review;
+
+        if (!movieRatings[movieId]) {
+            movieRatings[movieId] = { totalRatingCount: 0, reviewCount: 0 };
+        }
+
+        movieRatings[movieId].totalRatingCount += rating;
+        movieRatings[movieId].reviewCount += 1;
+    });
+
+    let moviesWithAvgRating = Object.keys(movieRatings).map(movieId => {
+        const { totalRatingCount, reviewCount } = movieRatings[movieId];
+        return {
+            movieId,
+            averageRating: totalRatingCount / reviewCount,
+        };
+    });
+
+    const topMovies = moviesWithAvgRating
+        .sort((a, b) => b.averageRating - a.averageRating)
+        .slice(0, limit);
+
+    res.json({ topMovies });
 });
 
 // Start the server
