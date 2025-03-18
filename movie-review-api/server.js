@@ -38,6 +38,17 @@ app.post('/movies', async (req, res) => {
     res.status(201).json(newMovie);
 });
 
+// Retrieve all Movie
+app.get('/movies', async (req, res) => {
+    const movies = await getDocs(collection(db, 'movies'));
+        
+    if (movies.empty()) {
+        return res.status(404).json({ error: 'Movies not found.' });
+    }
+
+    res.json(movies.data());
+});
+
 // Retrieve a Movie
 app.get('/movies/:id', async (req, res) => {
     const movieId = req.params.id;
