@@ -1,6 +1,7 @@
 import express from 'express';
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import admin from 'firebase-admin';
 
 const app = express();
 const port = 3000;
@@ -54,6 +55,23 @@ app.get('/movies/:id', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error fetching movie from Firebase Firestore', details: error });
     }
+});
+
+app.post('/movies/:id/reviews', async (req, res) => {
+    const { rating, reviewText } = req.body;
+    const movieId = req.params.id;
+
+    if (!rating || !reviewText) {
+        return res.status(400).json({ error: 'Rating and review text are required.' });
+    }
+
+    const newMovieReview = { 
+        movieId,
+        rating,
+        reviewText
+    };
+    await setDoc(doc(db, "reviews", generateDocId()), newMovieReview);
+    res.status(201).json(newMovieReview);
 });
 
 // Start the server
