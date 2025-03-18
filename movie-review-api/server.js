@@ -38,29 +38,35 @@ app.post('/movies', async (req, res) => {
     res.status(201).json(newMovie);
 });
 
-// Retrieve all Movie
+// Retrieve all Movies
 app.get('/movies', async (req, res) => {
-    const movies = await getDocs(collection(db, 'movies'));
-        
-    if (movies.empty()) {
-        return res.status(404).json({ error: 'Movies not found.' });
+    const moviesCollection = collection(db, 'movies');
+    const moviesSnapshot = await getDocs(moviesCollection);
+
+    if (moviesSnapshot.empty) {
+        return res.status(404).json({ error: 'No movies found.' });
     }
 
-    res.json(movies.data());
+    const movies = [];
+    moviesSnapshot.forEach(doc => {
+        movies.push({ id: doc.id, ...doc.data() });
+    });
+
+    res.json(movies);
 });
 
 // Retrieve a Movie
 app.get('/movies/:id', async (req, res) => {
     const movieId = req.params.id;
 
-    const docRef = doc(db, "movies", movieId);
-    const docSnap = await getDoc(docRef);
+    const movieFromCollection = doc(db, "movies", movieId);
+    const movie = await getDoc(movieFromCollection);
         
-    if (!docSnap.exists()) {
+    if (!movie.exists()) {
         return res.status(404).json({ error: 'Movie not found.' });
     }
 
-    res.json(docSnap.data());
+    res.json(movie.data());
 });
 
 app.post('/movies/:id/reviews', async (req, res) => {
