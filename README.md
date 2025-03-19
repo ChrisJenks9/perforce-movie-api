@@ -84,7 +84,7 @@ This will start the API server on port 3000. You can access the API at `http://l
 
 ### 3. Add a review for a movie
 
-**POST** `/movies/:id/reviews`
+**POST** `/reviews/:id`
 
 **Request body:**
 
@@ -110,7 +110,7 @@ This will start the API server on port 3000. You can access the API at `http://l
 
 ### 4. Retrieve all reviews for a movie and calculate average rating
 
-**GET** `/movies/:id/reviews`
+**GET** `/reviews/:id`
 
 **Response:**
 
@@ -120,7 +120,17 @@ This will start the API server on port 3000. You can access the API at `http://l
 ```json
 {
     "movieId": "movieIdHere",
-    "averageRating": 4.5
+    "averageRating": 4.5,
+    "reviews": [
+        {
+            "rating": 5,
+            "reviewText": "Great movie!"
+        },
+        {
+            "rating": 4,
+            "reviewText": "Good movie."
+        }
+    ]
 }
 ```
 
@@ -128,7 +138,7 @@ This will start the API server on port 3000. You can access the API at `http://l
 
 ### 5. Get top-rated movies based on reviews
 
-**GET** `/movies/reviews/top-rated`
+**GET** `/reviews/top-rated`
 
 **Query parameters:**
 
